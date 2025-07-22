@@ -1,0 +1,30 @@
+# === Terraform ===
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+*.tfvars.json
+terraform.tfvars
+.terraform/
+.terraform.lock.hcl
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# === IDEs and OS Files ===
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# === Logs ===
+*.log
+
+# === AWS credentials (do not commit, use environment variables or GitHub Actions secrets) ===
+*.pem
+*.key
+
+# === Docker ===
+*.tar
+*.dockerfile
