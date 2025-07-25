@@ -180,9 +180,3 @@ docker push <account-id>.dkr.ecr.eu-west-1.amazonaws.com/metabase_repo:latest
 MIT
 
 
-db_name = "metabase_db"
-db_user = "postgres"
-db_password = "postgres"
-db_host = "metabase-db.ct4cmms0k59l.eu-west-1.rds.amazonaws.com" 
-
-ecr_repo_url = "182399707265.dkr.ecr.eu-west-1.amazonaws.com/metabase_repo"
