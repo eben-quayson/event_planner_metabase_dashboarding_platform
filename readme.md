@@ -1,52 +1,30 @@
-# 🚀 Metabase ECS Fargate Deployment with Terraform
+# 🚀 Metabase on AWS ECS Fargate with Terraform
 
-This repository automates deploying **Metabase** on **AWS ECS Fargate** using **Terraform**, connecting it to a **PostgreSQL RDS** instance, and exposing it securely via **AWS ALB**.
+This repository automates deploying **Metabase** on **AWS ECS Fargate** using **Terraform**, connected to **PostgreSQL RDS**, storing Docker images in **AWS ECR**, and securely exposing Metabase via an **Application Load Balancer (ALB)** within a **private VPC architecture**.
 
 ---
 
 ## 📌 Features
 
-✅ Containerized **Metabase** on ECS Fargate  
-✅ Auto-provisioned **ALB**, Target Groups, Listeners  
-✅ Connects to **Postgres RDS** within your VPC  
-✅ Configurable environment variables via Terraform  
-✅ Uses **CloudWatch Logs** for debugging  
-✅ Easily extensible for CI/CD pipelines
-
----
-
-## 🗂 Folder Structure
-
-```
-
-metabase\_fargate\_deployment/
-│
-├── terraform/
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-│   ├── provider.tf
-│   └── modules/
-│       └── ecs\_metabase/
-│           ├── main.tf
-│           ├── variables.tf
-│           └── outputs.tf
-│
-└── README.md
-
-````
+✅ **Containerized Metabase** on ECS Fargate
+✅ **ALB** with auto-provisioned target groups and listeners
+✅ **PostgreSQL RDS** for persistent storage
+✅ Private **VPC with public and private subnets** for secure isolation
+✅ **CloudWatch Logs** for observability and debugging
+✅ **ECR** for secure image hosting with vulnerability scanning
+✅ Extensible for **CI/CD pipelines** and HTTPS integration
 
 ---
 
 ## ⚙️ Prerequisites
 
-- [Terraform](https://developer.hashicorp.com/terraform/install)
-- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) (authenticated)
-- [Docker](https://docs.docker.com/get-docker/)
-- An AWS account with:
-  - ECS Fargate permissions
-  - ECR for image hosting
-  - RDS PostgreSQL database accessible to ECS
+* [Terraform](https://developer.hashicorp.com/terraform/install)
+* [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) (configured)
+* [Docker](https://docs.docker.com/get-docker/)
+* An AWS account with:
+
+  * ECS Fargate, ECR, RDS, ACM, and VPC permissions
+  * Optional: S3 for Terraform state storage
 
 ---
 
@@ -57,30 +35,26 @@ metabase\_fargate\_deployment/
 ```bash
 git clone <your-repo-url>
 cd metabase_fargate_deployment/terraform
-````
+```
 
 ---
 
 ### 2️⃣ Configure variables
 
-Edit `terraform/variables.tf` or use a `terraform.tfvars` file:
+Edit `variables.tf` or create a `terraform.tfvars` file:
 
 ```hcl
-region = "eu-west-1"
-vpc_id = "vpc-xxxxxxx"
+aws_region = "eu-west-1"
 
-public_subnet_ids = ["subnet-xxxxxxxx", "subnet-xxxxxxxx"]
-
-db_name     = "your_db_name"
-db_user     = "your_db_user"
+db_name     = "metabase_db"
+db_user     = "metabase_user"
 db_password = "your_db_password"
-db_host     = "your-db.xxxxxx.eu-west-1.rds.amazonaws.com"
 
-ecr_repo_url        = "182399707265.dkr.ecr.eu-west-1.amazonaws.com/metabase_repo"
-metabase_image_tag  = "latest"
+ecr_repo_url       = "182399707265.dkr.ecr.eu-west-1.amazonaws.com/metabase_repo"
+metabase_image_tag = "latest"
 ```
 
-✅ **Ensure `db_host` does NOT contain `http://`.**
+✅ Ensure the **RDS database is accessible** from ECS tasks.
 
 ---
 
@@ -115,13 +89,13 @@ Type `yes` when prompted.
 After deployment, Terraform will output the **ALB DNS name**:
 
 ```
-alb_dns_name = metabase-alb-xxxxxxxxxx.eu-west-1.elb.amazonaws.com
+alb_dns_name = metabase-prod-xxxxxxxx.eu-west-1.elb.amazonaws.com
 ```
 
 Open:
 
 ```
-http://metabase-alb-xxxxxxxxxx.eu-west-1.elb.amazonaws.com
+http://metabase-prod-xxxxxxxx.eu-west-1.elb.amazonaws.com
 ```
 
 to access your **Metabase dashboard**.
@@ -130,21 +104,21 @@ to access your **Metabase dashboard**.
 
 ## 🪵 Logs & Debugging
 
-* Navigate to **CloudWatch → Log Groups → /ecs/metabase** to see container logs.
-* Check **ALB Target Group Health**:
+* Navigate to **CloudWatch → Log Groups → /aws/ecs/metabase-prod** to view container logs.
+* Check ALB target group health:
 
-  * Healthy targets indicate ECS tasks are running correctly.
-  * If unhealthy, check:
+  * Healthy targets = ECS tasks are functioning.
+  * Unhealthy targets:
 
-    * RDS connectivity.
-    * Security group rules.
-    * Environment variable correctness.
+    * Verify RDS connectivity.
+    * Check security groups.
+    * Confirm environment variables.
 
 ---
 
 ## 🔧 Useful Commands
 
-### Deploy image to ECR
+### Deploy Metabase Image to ECR
 
 ```bash
 aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.eu-west-1.amazonaws.com
@@ -158,25 +132,33 @@ docker push <account-id>.dkr.ecr.eu-west-1.amazonaws.com/metabase_repo:latest
 
 ## 💡 Notes
 
-✅ This setup uses **Metabase on ECS Fargate** with **awsvpc network mode**.
-✅ Ensure **RDS security group** allows inbound `5432` from ECS tasks' security group.
-✅ Metabase data is stored in your **Postgres database**, not locally within the container.
+✅ **awsvpc network mode** is used for ECS tasks, providing ENI-based networking within your VPC.
+✅ The RDS security group must allow inbound `5432` from the ECS tasks security group.
+✅ Metabase stores data in **PostgreSQL RDS**, ensuring persistence across container restarts.
 
 ---
 
 ## 🛠 Extending
 
-* Add HTTPS using ACM and redirect rules in your ALB.
-* Integrate with GitHub Actions for CI/CD:
+* Add **HTTPS** using ACM and ALB HTTPS listeners.
+* Integrate **GitHub Actions** for:
 
-  * Auto-build and push Metabase images to ECR.
-  * Terraform apply pipeline on PR merge.
-* Add backup and monitoring alarms for your RDS instance.
+  * Automated Docker image builds and ECR pushes.
+  * Automated `terraform apply` pipelines on PR merge.
+* Enable **RDS automated backups** and monitoring alarms.
+* Configure **VPC Endpoints for ECR and S3** for reduced internet dependency.
 
 ---
 
 ## ✨ License
 
 MIT
+
+---
+
+If you want, I can also prepare:
+✅ A **clean diagram** of your architecture to add to the README.
+✅ A **`SECURITY.md`** matching this architecture.
+✅ A **GitHub Actions workflow** to automate ECR + Terraform deploys.
 
 
