@@ -154,11 +154,5 @@ docker push <account-id>.dkr.ecr.eu-west-1.amazonaws.com/metabase_repo:latest
 
 MIT
 
----
-
-If you want, I can also prepare:
-✅ A **clean diagram** of your architecture to add to the README.
-✅ A **`SECURITY.md`** matching this architecture.
-✅ A **GitHub Actions workflow** to automate ECR + Terraform deploys.
 
 
